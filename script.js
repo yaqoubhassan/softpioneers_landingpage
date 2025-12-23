@@ -206,33 +206,43 @@ function initContactForm() {
 }
 
 /**
- * Send email using Web3Forms (free service, no API key needed for basic use)
+ * Send email using FormSubmit.co (free service, no API key needed)
+ * First submission will require email confirmation from appbukata@gmail.com
  */
 async function sendEmail(data) {
     const { name, email, subject, message } = data;
 
-    // Using Web3Forms - a free form submission service
+    // Using FormSubmit.co - a free form submission service
+    // First time: They'll send a confirmation email to appbukata@gmail.com
     const formData = new FormData();
-    formData.append('access_key', 'YOUR_ACCESS_KEY'); // Replace with actual key or use fallback
     formData.append('name', name);
     formData.append('email', email);
-    formData.append('subject', subject);
+    formData.append('_subject', `[SoftPioneers Inquiry] ${subject}`);
     formData.append('message', message);
-    formData.append('to_email', 'appbukata@gmail.com');
+    formData.append('_captcha', 'false');
+    formData.append('_template', 'table');
 
     try {
-        const response = await fetch('https://api.web3forms.com/submit', {
+        const response = await fetch('https://formsubmit.co/ajax/appbukata@gmail.com', {
             method: 'POST',
-            body: formData
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+                name: name,
+                email: email,
+                _subject: `[SoftPioneers Inquiry] ${subject}`,
+                message: message
+            })
         });
 
         const result = await response.json();
 
-        if (result.success) {
+        if (result.success === "true" || result.success === true) {
             return { success: true };
         } else {
-            // If Web3Forms fails, use mailto fallback
-            return { success: false, message: 'Service unavailable' };
+            return { success: false, message: result.message || 'Service unavailable' };
         }
     } catch (error) {
         // Network error - use mailto fallback
